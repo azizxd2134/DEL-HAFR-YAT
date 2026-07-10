@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DEL HAFRİYAT</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0f1117;
+      color: #f0f0f0;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      min-height: 100vh;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      padding: 24px 24px;
+    }
+
+    header a {
+      position: absolute;
+      left: 24px;
+      color: #888;
+      text-decoration: none;
+      font-size: 22px;
+      transition: color 0.2s;
+    }
+    header a:hover { color: #f0f0f0; }
+
+    header h1 {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 4px;
+      padding: 4px;
+    }
+
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 600px) {
+      .grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .slot {
+      position: relative;
+      aspect-ratio: 1;
+      overflow: hidden;
+      background: #1e2130;
+      cursor: pointer;
+    }
+
+    .slot img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.3s ease;
+    }
+    .slot:hover img { transform: scale(1.05); }
+
+    .slot .num {
+      position: absolute;
+      bottom: 8px;
+      left: 8px;
+      background: rgba(0,0,0,0.65);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      padding: 2px 7px;
+      border-radius: 2px;
+    }
+
+    /* Lightbox */
+    #lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.92);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    #lightbox.active { display: flex; }
+
+    #lightbox img {
+      max-width: 90vw;
+      max-height: 90vh;
+      object-fit: contain;
+    }
+
+    #lightbox .close {
+      position: absolute;
+      top: 16px;
+      right: 20px;
+      font-size: 32px;
+      color: rgba(255,255,255,0.7);
+      cursor: pointer;
+      background: none;
+      border: none;
+      line-height: 1;
+      transition: color 0.2s;
+    }
+    #lightbox .close:hover { color: #fff; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="https://www.delhafriyat.com" title="Geri Dön">&#8592;</a>
+    <h1>DEL HAFRİYAT</h1>
+  </header>
+
+  <div class="grid">
+
+    <div class="slot" onclick="openLightbox('galeri10.jpg.jpeg')">
+      <img src="galeri10.jpg.jpeg" alt="CAT-01" loading="lazy" />
+      <span class="num">01</span>
+    </div>
+
+    <div class="slot" onclick="openLightbox('galeri9.jpg.jpeg')">
+      <img src="galeri9.jpg.jpeg" alt="KOM-02" loading="lazy" />
+      <span class="num">02</span>
+    </div>
+
+    <div class="slot" onclick="openLightbox('galeri8.jpg.jpeg')">
+      <img src="galeri8.jpg.jpeg" alt="VOL-03" loading="lazy" />
+      <span class="num">03</span>
+    </div>
+
+    <div class="slot" onclick="openLightbox('galeri7.jpg.jpeg')">
+      <img src="galeri7.jpg.jpeg" alt="HIT-04" loading="lazy" />
+      <span class="num">04</span>
+    </div>
+
+    <div class="slot" onclick="openLightbox('galeri6.jpg.jpeg')">
+      <img src="galeri.jpg.jpeg" alt="CAT-05" loading="lazy" />
+      <span class="num">05</span>
+    </div>
+
+    <div class="slot" onclick="openLightbox('galeri5.jpg.jpeg')">
+      <img src="galeri5.jpg.jpeg"KOM-06" loading="lazy" />
+      <span class="num">06</span>
+    </div>
+
+    <div class="slot" onclick="openLightbox('galeri4.jpg.jpeg')">
+      <img src="galeri4.jpg.jpeg" alt="VOL-07" loading="lazy" />
+      <span class="num">07</span>
+    </div>
+
+    <div class="slot" onclick="openLightbox('galeri3.jpg.jpeg')">
+      <img src="galeri3.jpgv" alt="HIT-08" loading="lazy" />
+      <span class="num">08</span>
+    </div>
+
+    <div class="slot" onclick="openLightbox('galeri2.jpg.jpeg')">
+      <img src="galeri2.jpg.jpeg" alt="CAT-09" loading="lazy" />
+      <span class="num">09</span>
+    </div>
+
+    <div class="slot" onclick="openLightbox('galeri1.jpg.jpeg')">
+      <img src="galeri1.jpg.jpeg" alt="JCB-10" loading="lazy" />
+      <span class="num">10</span>
+    </div>
+
+  </div>
+
+  <!-- Lightbox -->
+  <div id="lightbox" onclick="closeLightbox()">
+    <button class="close" onclick="closeLightbox()">&times;</button>
+    <img id="lightbox-img" src="" alt="" onclick="event.stopPropagation()" />
+  </div>
+
+  <script>
+    function openLightbox(src) {
+      document.getElementById('lightbox-img').src = src;
+      document.getElementById('lightbox').classList.add('active');
+    }
+    function closeLightbox() {
+      document.getElementById('lightbox').classList.remove('active');
+      document.getElementById('lightbox-img').src = '';
+    }
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeLightbox();
+    });
+  </script>
+
+</body>
+</html>
