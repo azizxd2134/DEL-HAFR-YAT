@@ -1,91 +1,107 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <!-- ============================================================
-     DEL HAFRİYAT — Ziyaretçi Takip & IP Engelleme Sistemi
-     Bu bloğu <head> ... </head> içine yapıştırın.
-
-     API_URL'yi aşağıya göre güncelleyin:
-     • Test için (Replit açıkken):
-       https://aadd3225-0999-4984-b06b-b2c6644cc798-00-18ezfhv64wye9.sisko.replit.dev/api
-     • Yayına aldıktan sonra ("Publish" sonrası):
-       https://SIZIN-UYGULAMANIZ.replit.app/api
-     ============================================================ -->
+  <!--
+  ╔══════════════════════════════════════════════════════╗
+  ║   DEL HAFRIYAT — Ziyaretçi Takip Kodu               ║
+  ║   <head> etiketinin içine ekleyin                    ║
+  ╚══════════════════════════════════════════════════════╝
+-->
 <script>
 (function () {
   "use strict";
 
-  /* ── AYAR: Replit API adresinizi buraya yazın ── */
-  var API_URL = "https://del-hafr-yat.vercel.app/api";
-  /* ─────────────────────────────────────────────── */
+  var API_BASE  = "https://c0e819bf-7a2f-42e6-97a3-d61564ac56a6-00-6zbmhqjgqwv8.pike.replit.dev/api";
+  var ENDPOINT  = "/visitors";
+  var RETRY_MAX = 3;
+  var RETRY_MS  = 2000;
 
-  function engelEkraniGoster(ip) {
-    document.documentElement.style.overflow = "hidden";
-    var overlay = document.createElement("div");
-    overlay.style.cssText = [
-      "position:fixed","top:0","left:0","width:100vw","height:100vh",
-      "background:#0d0d0d","z-index:2147483647","display:flex",
-      "flex-direction:column","align-items:center","justify-content:center",
-      "font-family:'Segoe UI',Arial,sans-serif","color:#fff",
-      "text-align:center","padding:2rem","box-sizing:border-box"
-    ].join(";");
-    overlay.innerHTML =
-      '<div style="border:2px solid #c0392b;padding:3rem 4rem;max-width:560px;background:#1a0a0a">' +
-        '<div style="font-size:4rem;margin-bottom:1rem">&#128683;</div>' +
-        '<h1 style="font-size:2rem;font-weight:900;color:#e74c3c;letter-spacing:.05em;margin:0 0 1rem">ERİŞİMİNİZ ENGELLENDİ</h1>' +
-        '<div style="width:60px;height:3px;background:#c0392b;margin:0 auto 1.5rem"></div>' +
-        '<p style="color:#aaa;font-size:1rem;line-height:1.6;margin:0 0 1.5rem">' +
-          'Bu IP adresine ait erişim sistem yöneticisi tarafından engellenmiştir.<br>' +
-          'Bir hata olduğunu düşünüyorsanız lütfen yönetici ile iletişime geçin.' +
-        '</p>' +
-        '<p style="color:#555;font-size:.75rem;border-top:1px solid #333;padding-top:1rem;margin:0">' +
-          'IP: ' + ip + ' &nbsp;|&nbsp; ' + new Date().toLocaleString("tr-TR") +
-        '</p>' +
-      '</div>';
-    function ekle() { document.body.appendChild(overlay); }
-    if (document.body) { ekle(); } else { document.addEventListener("DOMContentLoaded", ekle); }
-    document.addEventListener("keydown",     function(e){ e.preventDefault(); }, true);
-    document.addEventListener("contextmenu", function(e){ e.preventDefault(); }, true);
+  function collectData() {
+    return {
+      pageUrl:   window.location.href,
+      pageTitle: document.title || "",
+      referrer:  document.referrer || "",
+      userAgent: navigator.userAgent || "",
+      language:  navigator.language  || "",
+      screenW:   screen.width,
+      screenH:   screen.height,
+      timezone:  (Intl && Intl.DateTimeFormat)
+                   ? Intl.DateTimeFormat().resolvedOptions().timeZone
+                   : "",
+      visitedAt: new Date().toISOString()
+    };
   }
 
-  function ziyaretiKaydet(ip) {
-    try {
-      fetch(API_URL + "/visitors", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ip: ip,
-          userAgent: navigator.userAgent,
-          pageUrl: window.location.href
-        })
-      }).catch(function(){});
-    } catch(_) {}
+  function send(data, attempt) {
+    attempt = attempt || 1;
+    fetch(API_BASE + ENDPOINT, {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      mode:    "cors",
+      cache:   "no-store",
+      body:    JSON.stringify(data)
+    })
+    .then(function(res) {
+      return res.json().catch(function(){ return {}; });
+    })
+    .then(function(json) {
+      if (json && json.blocked === true) {
+        try { document.body.style.display = "none"; } catch(e) {}
+      }
+    })
+    .catch(function() {
+      if (attempt < RETRY_MAX) {
+        setTimeout(function(){ send(data, attempt + 1); }, RETRY_MS * attempt);
+      }
+    });
   }
 
-  function kontrol() {
-    fetch("https://api.ipify.org?format=json")
-      .then(function(r){ return r.json(); })
-      .then(function(data){
-        var ip = data.ip;
-        if (!ip) return;
-        return fetch(API_URL + "/blacklist/check/" + encodeURIComponent(ip))
-          .then(function(r){ return r.json(); })
-          .then(function(result){
-            if (result.isBlocked) { engelEkraniGoster(ip); }
-            else                  { ziyaretiKaydet(ip);    }
-          });
-      })
-      .catch(function(){
-        /* API erişilemezse ziyaretçiyi engelleme, sessizce geç */
+  function init() {
+    send(collectData());
+
+    /* SPA route değişikliklerini yakala */
+    var lastUrl = window.location.href;
+    new MutationObserver(function() {
+      if (window.location.href !== lastUrl) {
+        lastUrl = window.location.href;
+        send(collectData());
+      }
+    }).observe(document.documentElement, { childList: true, subtree: true });
+
+    ["popstate", "hashchange"].forEach(function(evt) {
+      window.addEventListener(evt, function() {
+        setTimeout(function() {
+          if (window.location.href !== lastUrl) {
+            lastUrl = window.location.href;
+            send(collectData());
+          }
+        }, 100);
       });
+    });
   }
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", kontrol);
+    document.addEventListener("DOMContentLoaded", init);
   } else {
-    kontrol();
+    init();
   }
 })();
+</script>
+<!--
+  NASIL KULLANILIR?
+  ─────────────────────────────────────────
+  Yukarıdaki <script>...</script> bloğunu
+  sitenizin HER sayfasının <head> kısmına
+  yapıştırın. Şablon dosyanız varsa
+  (header.php, base.html vb.) tek seferlik
+  eklemeniz yeterlidir.
+
+  WordPress:
+  Appearance → Theme Editor → header.php
+  </head> etiketinden hemen önce ekleyin.
+  Ya da "Insert Headers and Footers"
+  eklentisini kullanın.
+-->
 </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
